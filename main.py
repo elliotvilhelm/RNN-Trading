@@ -63,7 +63,8 @@ def train():
 
 
 
-    opt = tf.keras.optimizers.Adam(lr=LEARNING_RATE, decay=DECAY)
+    opt = tf.keras.optimizers.Adam(lr=LEARNING_RATE) #, decay=DECAY)
+
     model = build_model(LOSS, opt)
     tensorboard = TensorBoard(log_dir="logs/{}".format(NAME))
     filepath = "RNN_Final-{epoch:02d}-{val_acc:.3f}"  # unique file name that will include the epoch and the validation acc for that epoch
