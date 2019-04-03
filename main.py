@@ -22,7 +22,8 @@ from model import build_model
 
 def train():
     main_df = pd.DataFrame()
-    ratios = ["BTC-USD", "LTC-USD", "ETH-USD"] #, "BCH-USD"]
+    # ratios = ["BTC-USD", "LTC-USD", "ETH-USD"] #, "BCH-USD"]
+    ratios = ["BTC-USD", "EOS-USD", "ETH-USD", "BCHABC-USD", ] #, "BCH-USD"]
     for ratio in ratios:
         dataset = f"crypto_data/{ratio}.csv"
         df = pd.read_csv(dataset, names=["time", "low", "high", "open", "close", "volume"])
@@ -35,6 +36,9 @@ def train():
             main_df = df
         else:
             main_df = main_df.join(df)
+    # main_df["BTC-MOMENTUM"] = df["BTC-MOMENTUM"]
+    # main_df["BTC-MA"] = df["BTC-MA"]
+    # main_df["BTC-EMA"] = df["BTC-EMA"]
 
     main_df['future'] = main_df[f"{RATIO_TO_PREDICT}_close"].shift(-FUTURE_PERIOD_PREDICT)
     main_df = main_df[:-FUTURE_PERIOD_PREDICT]
@@ -55,17 +59,10 @@ def train():
     print(f"train data: {len(train_x)} validation: {len(validation_x)}")
     print(f"Dont buys: {train_y.count(0)}, buys: {train_y.count(1)}")
     print(f"VALIDATION Dont buys: {validation_y.count(0)}, buys: {validation_y.count(1)}")
-
-
-
-
     NAME = f"{SEQ_LEN}-SEQ-{FUTURE_PERIOD_PREDICT}-PRED-{int(time.time())}"  # a unique name for the model
-
-
-
     opt = tf.keras.optimizers.Adam(lr=LEARNING_RATE) #, decay=DECAY)
-
     model = build_model(LOSS, opt)
+    print(model.summary())
     tensorboard = TensorBoard(log_dir="logs/{}".format(NAME))
     filepath = "RNN_Final-{epoch:02d}-{val_acc:.3f}"  # unique file name that will include the epoch and the validation acc for that epoch
     checkpoint = ModelCheckpoint("models/{}.model".format(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')) # saves only the best ones
