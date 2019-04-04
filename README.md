@@ -1,4 +1,4 @@
-#### Training At: ![75.80.54.222:6006](75.80.54.222:6006)
+#### Training At: [75.80.54.222:6006](75.80.54.222:6006)
 
 # RNN Bitcoin Movement Prediction
 This project aims to predict Bitcoin price movement over short intervals. The current best model has a validation accuracy of 66.9% predicting price change 120 minutes into the future.
@@ -34,3 +34,4 @@ Output
 
 # Resources
 https://machinelearningmastery.com/dropout-for-regularizing-deep-neural-networks/
+https://pythonprogramming.net/crypto-rnn-model-deep-learning-python-tensorflow-keras/
