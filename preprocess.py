@@ -78,7 +78,8 @@ def preprocess_df(df):
         print(col)
         if col != "target":
             df = df[df[col] != 0]
-            df[col] = df[col].pct_change()  # normalize
+            if col != 'BTC-MOMENTUM' and col != 'BTC-TSI':
+                df[col] = df[col].pct_change()  # normalize
             df.dropna(inplace=True)
             df[col] = preprocessing.scale(df[col].values)  # scale between 0 and 1
     df.dropna(inplace=True)

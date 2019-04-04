@@ -18,12 +18,14 @@ from tensorflow.keras.layers import Dense, Dropout, LSTM, CuDNNLSTM, BatchNormal
 from tensorflow.keras.callbacks import TensorBoard
 from tensorflow.keras.callbacks import ModelCheckpoint
 from model import build_model
+from tensorflow.keras.models import load_model
+
 
 
 def train():
     main_df = pd.DataFrame()
     # ratios = ["BTC-USD", "LTC-USD", "ETH-USD"] #, "BCH-USD"]
-    ratios = ["BTC-USD", "EOS-USD", "ETH-USD", "BCHABC-USD", ] #, "BCH-USD"]
+    ratios = ["BTC-USD", "EOS-USD", "ETH-USD", "BCHABC-USD", "LTC-USD"] #, "BCH-USD"]
     for ratio in ratios:
         dataset = f"crypto_data/{ratio}.csv"
         df = pd.read_csv(dataset, names=["time", "low", "high", "open", "close", "volume"])
@@ -62,7 +64,15 @@ def train():
     NAME = f"{SEQ_LEN}-SEQ-{FUTURE_PERIOD_PREDICT}-PRED-{int(time.time())}"  # a unique name for the model
     opt = tf.keras.optimizers.Adam(lr=LEARNING_RATE) #, decay=DECAY)
     model = build_model(LOSS, opt)
+
+
+    # model = load_model(
+    #     "models/RNN_Final-03-0.588.model",
+    #     custom_objects=None,
+    #     compile=True
+    # )
     print(model.summary())
+    # import pdb; pdb.set_trace()
     tensorboard = TensorBoard(log_dir="logs/{}".format(NAME))
     filepath = "RNN_Final-{epoch:02d}-{val_acc:.3f}"  # unique file name that will include the epoch and the validation acc for that epoch
     checkpoint = ModelCheckpoint("models/{}.model".format(filepath, monitor='val_acc', verbose=1, save_best_only=True, mode='max')) # saves only the best ones
@@ -119,7 +129,6 @@ def go_live(model):
 
 
 def run():
-    from tensorflow.keras.models import load_model
 
     model = load_model(
         "models/RNN_Final-21-0.562.model",
