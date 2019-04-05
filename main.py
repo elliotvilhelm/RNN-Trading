@@ -86,7 +86,7 @@ def train():
     )
 
     # Score model
-    score = model.evaluate(validation_x, validation_y, verbose=0)
+    score = model.evaluate(validation_x, validation_y, verbose=1)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
     # Save model
@@ -101,37 +101,97 @@ from collections import deque
 from binance.client import Client
 from binance_config import api_key, api_secret
 import binance_constants
+from config import currencies
+from preprocess import true_strength_index
 
-def go_live(model):
+
+def get_live_data():
     client = Client(api_key, api_secret)
     feed = deque()
     main_data = pd.DataFrame()
     for currency in currencies:
         data = client.get_historical_klines(
-            symbol=currency, interval=binance_constants.KLINE_INTERVAL_1MINUTE, start_str="2 hours ago UTC")
+            symbol=currency, interval=binance_constants.KLINE_INTERVAL_5MINUTE,
+            start_str="5 days ago UTC")
         time = list(map(lambda x: [float(x[OPEN_TIME_IDX])], data))[:-1] # opentime open high low close volume  DROP LAST ONE??? GRABAGE?
         data = list(map(lambda x: [float(x[CLOSE_IDX]), float(x[VOLUME_IDX])], data))[:-1]  # opentime open high low close volume
-        print("data.tail()", data[-3:])
+
+        print(currency)
+        print("data.head()", data[:2], time[:2])
+        print("data.tail()", data[-2:], time[-2:])
+
         data = pd.DataFrame(data, columns=[f"{currency}_close", f"{currency}_volume"])
         main_data = pd.concat([main_data, data], axis=1)
 
+
+    MA_WINDOW = 20
     df = main_data
+    df['BTC-TSI'] = true_strength_index(df['BTCUSDT_close'], 25, 13)
+    # import pdb
+    # pdb.set_trace()
+    df['BTC-MA'] = df['BTCUSDT_close'].rolling(window=MA_WINDOW).mean()  # moving average
+    df['BTC-EMA'] = df['BTCUSDT_close'].ewm(span=MA_WINDOW).mean()  # moving average
+    df['BTC-MOMENTUM'] = df['BTCUSDT_close'].diff(MA_WINDOW)
+    df = df[38:]
+
     for col in df.columns:
         df = df[df[col] != 0]
-        df[col] = df[col].pct_change()  # normalize
+        if col != 'BTC-MOMENTUM' and col != 'BTC-TSI':
+            df[col] = df[col].pct_change()  # normalize
         df.dropna(inplace=True)
         df[col] = preprocessing.scale(df[col].values)  # scale between 0 and 1
+
     df.dropna(inplace=True)
-    df = df[-SEQ_LEN:]
-    test_point = np.array([df.values])
-    output = predict(model, test_point)
-    return output
+    # df = df[-SEQ_LEN:]
+    return np.array([df.values]) # test data
+
+
+def test():
+    model1 = load_model(
+        # 420 min 120 min prediction
+        "models/RNN_Final-14-0.571.model",
+        custom_objects=None,
+        compile=True
+    )
+    model2 = load_model(
+        # 420 min 120 min prediction
+        "models/RNN_Final-03-0.559.model",
+        custom_objects=None,
+        compile=True
+    )
+    model3 = load_model(
+        # 420 min 120 min prediction
+        "models/RNN_Final-16-0.575.model",
+        custom_objects=None,
+        compile=True
+    )
+    model4 = load_model(
+        # 420 min 120 min prediction
+        "models/RNN_Final-07-0.546.model",
+        custom_objects=None,
+        compile=True
+    )
+
+
+    data = get_live_data()
+    recent = data[:,-SEQ_LEN:]
+
+    out = model1.predict(recent)
+    print(out)
+    out = model2.predict(recent)
+    print(out)
+    out = model3.predict(recent)
+    print(out)
+    out = model4.predict(recent)
+    print(out)
 
 
 def run():
 
     model = load_model(
-        "models/RNN_Final-21-0.562.model",
+        # "models/RNN_Final-21-0.562.model",
+        # 420 min 120 min prediction
+        "RNN_Final-07-0.669.model",
         custom_objects=None,
         compile=True
     )
@@ -148,9 +208,9 @@ def run():
     actions = []
     prices = []
     # while True:
-    for i in range(240):
-        time.sleep(60)
-        output = go_live(model)
+    for i in range(1):
+        # time.sleep(60)
+        output = go_live()
         action = output.argmax()
         price = client.get_symbol_ticker(symbol="BTCUSDT")
         prices += [price['price']]
@@ -207,4 +267,9 @@ def run():
 
 train()
 # run()
-
+#test()
+# 5:13 pm going down current: $4,937 [[0.6649782  0.33502182]]  -- correct $4,933
+# 6:17 down from $4,932 
+# 6:35 down  $4,925
+# [[0.50210404 0.49789596]]
+#[[0.7197066  0.28029343]]

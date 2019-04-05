@@ -10,20 +10,20 @@ def build_model(loss, opt):
     # model.add(Dense(64, activation='tanh', input_shape=(SEQ_LEN, INPUT_DIM)))
     # model.add(BatchNormalization())
 
-    model.add(LSTM(128, input_shape=(SEQ_LEN, INPUT_DIM), return_sequences=True))
-    model.add(Dropout(0.1))
+    model.add(LSTM(256, input_shape=(SEQ_LEN, INPUT_DIM), return_sequences=True))
+    model.add(Dropout(0.8))
     model.add(BatchNormalization())
 
     model.add(LSTM(256, return_sequences=True))
-    model.add(Dropout(0.1))
+    model.add(Dropout(0.8))
     model.add(BatchNormalization())
 
-    model.add(LSTM(128))
-    model.add(Dropout(0.1))
+    model.add(LSTM(256))
+    model.add(Dropout(0.8))
     model.add(BatchNormalization())
 
     model.add(Dense(64, activation='tanh'))
-    # model.add(Dropout(0.1))
+    model.add(Dropout(0.1))
 
     model.add(Dense(2, activation='softmax'))
 
